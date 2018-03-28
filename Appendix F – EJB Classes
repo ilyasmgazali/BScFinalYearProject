@@ -1,0 +1,283 @@
+Appendix F – EJB Classes
+----- EJB Classes ------
+
+ShoppingBasketLocal Class
+
+package Model.EJB;
+import Model.JPA.Customer;
+import Model.JPA.Product;
+import java.util.List;
+import javax.ejb.Local;
+
+@Local
+public interface ShoppingBasketLocal {
+    void addProduct(Product p);
+    void removeProduct(String id );
+    void checkout(String orderno, String cID);
+    public List<Product> getBasketProducts();    
+    void setCustomer(Customer c);
+    Customer getCustomer();
+}
+
+ShoppingBasketBean Class
+
+package Model.EJB;
+import Model.JPA.Customer;
+import Model.JPA.Orderline;
+import Model.JPA.OrderlinePK;
+import Model.JPA.Orders;
+import Model.JPA.Product;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.annotation.PostConstruct;
+import javax.ejb.Stateful;
+import javax.ejb.StatefulTimeout;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+@Stateful
+@StatefulTimeout(unit=TimeUnit.MINUTES, value = 20)
+public class ShoppingBasketBean implements ShoppingBasketLocal {
+    @PersistenceContext(unitName="FYPWebAppPU")
+    private EntityManager em;
+    private List shoppingCartProducts;    
+    private Customer cus;
+    @PostConstruct // method only used one time, to initialise
+    private void intialiseBean(){
+        shoppingCartProducts = new ArrayList<>();
+        cus = new Customer();
+    } 
+    @Override    
+    public void addProduct(Product prod) {
+        shoppingCartProducts.add(prod);
+    }
+    @Override
+    public void removeProduct(String id ){
+        List<Product> prodlist = getBasketProducts();
+        Product productToRemove = null;
+        for (Product ps : prodlist){             
+            if ( ps.getProductId().equals(id) ){
+                productToRemove = em.find(Product.class, id);
+            }   
+        } 
+        prodlist.remove(productToRemove);
+        shoppingCartProducts = prodlist;
+    }
+    @Override
+    public List<Product> getBasketProducts() {
+        return shoppingCartProducts;
+    }
+    @Override
+    public void setCustomer(Customer c){
+        cus = c;
+    }
+    @Override 
+    public Customer getCustomer(){
+        return cus;
+    }
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)//transaction type 
+    public void checkout(String orderno, String cUsernam) {     
+        Date date = new Date( );
+        SimpleDateFormat dateformat = new SimpleDateFormat("yyyy.MM.dd");
+        //dateformat.format(date);        
+        Orders orders = new Orders();
+        orders.setOrderNo(orderno);
+        orders.setOrderDate(date);
+        Customer cust = (Customer)em.createNamedQuery("Customer.findByCUsername").setParameter("cUsername", cUsernam).getSingleResult();      
+        orders.setCustomerId(cust);
+        String custID = cust.getCustomerId(); //delete?
+        List<Product> prodlist = getBasketProducts();
+//        try {
+        em.persist(orders);
+        for (Product ps : prodlist){ 
+            OrderlinePK orderlinepk = new OrderlinePK();    
+            orderlinepk.setOrderNo(orderno);
+            orderlinepk.setProductId(ps.getProductId());
+        //    em.persist(orderlinepk);
+            Orderline orderline = new Orderline();
+            orderline.setOrderlinePK(orderlinepk);
+            orderline.setOrders(orders);
+            orderline.setProduct(ps);
+            orderline.setQuantity(1);
+            em.persist(orderline);
+        }
+//        
+//        }catch(Exception e){            
+//        }  
+        shoppingCartProducts.clear();
+    }    
+}
+
+
+ProductFinderLocal Class
+
+package Model.EJB;
+import Model.JPA.Category;
+import Model.JPA.Product;
+import java.util.List;
+import javax.ejb.Local;
+@Local
+public interface ProductFinderLocal {
+    List<Product> getAllItems();
+    List<Product> getItemCategory(String s);
+    Product getProduct(String st);
+    void newProduct (String id, String desc, Integer price, String catID);    
+    void deleteProduct(String productId);
+}
+
+ProductFinderBean Class
+
+package Model.EJB;
+import Model.JPA.Category;
+import Model.JPA.Product;
+import java.util.List;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+@Stateless
+public class ProductFinderBean implements ProductFinderLocal {     
+    @PersistenceContext(unitName="FYPWebAppPU")
+    private EntityManager em;
+    @Override
+    public List<Product> getAllItems() {
+        return em.createNamedQuery("Product.findAll").getResultList();
+    }
+    @Override
+    public List<Product> getItemCategory(String s){
+        return em.createNamedQuery("Product.findByCategoryJoin").setParameter("category", s).getResultList();
+    }
+    @Override
+    public Product getProduct(String productId){
+        return em.find(Product.class, productId);
+    }
+    @Override 
+    public void newProduct (String id, String desc, Integer price, String catID) {
+        Product product = new Product();
+        Category catObj = em.find(Category.class, catID);
+        product.setProductId(id);
+        product.setDescription(desc);
+        product.setPrice(price);
+        product.setCategoryId(catObj);       
+        em.persist(product);
+    }
+    @Override 
+    public void deleteProduct(String productId){
+        Product prod = getProduct(productId);
+        if (prod != null) {
+         em.remove(prod);
+        }
+    }
+}
+
+
+CustomerLocal Class
+
+package Model.EJB;
+import javax.ejb.Local;
+
+@Local
+public interface CustomerLocal {
+    boolean isValid();
+    void validate();
+    void currentCustomer(String s);
+    String getCurrentCustomer();
+}
+
+CustomerBean Class
+
+package Model.EJB;
+import Model.JPA.Product;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.ejb.Stateful;
+import javax.ejb.StatefulTimeout;
+@Stateful
+@StatefulTimeout(unit = TimeUnit.MINUTES, value = 30)
+public class CustomerBean implements CustomerLocal {
+    private boolean validateState = false;
+    String customerUsername;
+
+    List<Product> myProducts;
+    @Override    
+    public boolean isValid() {
+        return validateState;
+    } 
+    @Override 
+    public void validate() {        
+        validateState = true;
+    } 
+    @Override
+    public void currentCustomer(String s) {
+        customerUsername = s;
+    }
+    @Override
+    public String getCurrentCustomer(){
+        return customerUsername;
+    }
+
+}
+
+CustomerFinderLocal Class
+
+package Model.EJB;
+
+import Model.JPA.Customer;
+import javax.ejb.Local;
+
+@Local
+public interface CustomerFinderLocal {
+    Customer getCustomerWithID(String customerId);
+    Customer getCustomerWithUsername(String uname);
+    boolean validateCustomer(String uname, String pword);
+    void newUser(String customerId, String cFirstname, String cLastname, String cUsername, String cPassword);
+}
+
+CustomerFinder Bean Class
+
+package Model.EJB;
+import Model.JPA.Customer;
+import javax.ejb.Stateless;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+@Stateless
+public class CustomerFinderBean implements CustomerFinderLocal{
+    @PersistenceContext(unitName="FYPWebAppPU")
+    private EntityManager em;    
+    @Override 
+    public Customer getCustomerWithID(String customerId) { 
+        return em.find(Customer.class, customerId);
+    } 
+    @Override
+    public Customer getCustomerWithUsername(String uname) { 
+        return (Customer)em.createNamedQuery("Customer.findByCUsername").setParameter("cUsername", uname).getSingleResult();
+    } 
+    @Override
+    public boolean validateCustomer(String uname, String pword) {       
+        Boolean b = false;
+        try{
+            Customer c = (Customer)em.createNamedQuery("Customer.findByCUsername").setParameter("cUsername", uname).getSingleResult();        
+            String p = c.getCPassword();           
+            if (p == null ? pword == null : p.equals(pword)){
+                b = true;
+            }
+            return b;
+        }catch(Exception e){
+            return b;
+        }        
+    }    
+    @Override 
+    public void newUser(String customerId, String cFirstname, String cLastname, String cUsername, String cPassword){
+        Customer customer = new Customer();
+        customer.setCustomerId(customerId);
+        customer.setCFirstname(cFirstname);
+        customer.setCLastname(cLastname);
+        customer.setCUsername(cUsername);
+        customer.setCPassword(cPassword);      
+        em.persist(customer);
+    }    
+}
