@@ -1,0 +1,383 @@
+Appendix E – Servlet Classes
+----- Servlet Classes  ------
+
+ShoppingCartServlet Class 
+
+package Control.Servlets;
+import Model.EJB.ProductFinderLocal;
+import Model.EJB.ShoppingBasketLocal;
+import Model.JPA.Product;
+import java.io.IOException;
+import java.util.List;
+import javax.ejb.EJB;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+@WebServlet(name = "ShoppingCartServlet", urlPatterns = {"/ShoppingCartServlet"})
+public class ShoppingCartServlet extends HttpServlet {
+    @EJB private ProductFinderLocal productFinder;
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession();
+        ShoppingBasketLocal cart =(ShoppingBasketLocal)session.getAttribute("CartKey");
+        //get cart products and put into tempbasket 
+        List<Product> tempBasket = cart.getBasketProducts();
+        session.setAttribute("tempBasket", tempBasket);
+        RequestDispatcher dispatcherrr = request.getRequestDispatcher("CheckoutPage.jsp");
+        dispatcherrr.forward(request, response);  
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String hiddenChoice = request.getParameter("addorremoveItem");
+        
+        if ( hiddenChoice.equals("additem") ){ 
+        //******************ADD ITEM TO BASKET        
+        //which item was selected
+        String itemSelectedID = request.getParameter("itemSelected");        
+        //get basket, put new item in basket
+        HttpSession session = request.getSession();
+        ShoppingBasketLocal cart =(ShoppingBasketLocal)session.getAttribute("CartKey");
+        cart.addProduct( productFinder.getProduct(itemSelectedID));
+        //update cart session 
+        session.setAttribute("CartKey", cart);  
+        //update cart list session
+        List<Product> tempBasket = cart.getBasketProducts();
+        session.setAttribute("tempBasket", tempBasket);
+        //send back to item page
+        RequestDispatcher dispatcherrr = request.getRequestDispatcher("ItemsPage.jsp");
+        dispatcherrr.forward(request, response);
+        //*******************REMOVE ITEM FROM BASKET
+        } else if (hiddenChoice.equals("removeitem")){
+            String itemSelectedID = request.getParameter("itemSelected"); 
+            HttpSession session = request.getSession();
+            ShoppingBasketLocal cart =(ShoppingBasketLocal)session.getAttribute("CartKey");
+            cart.removeProduct(itemSelectedID);
+            session.setAttribute("CartKey", cart);  
+            List<Product> tempBasket = cart.getBasketProducts();
+            session.setAttribute("tempBasket", tempBasket);
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("CheckoutPage.jsp");
+            dispatcherrr.forward(request, response);            
+        }
+        
+        //
+        
+    }
+}
+
+MainServlet Class 
+
+package Control.Servlets;
+import Model.EJB.ShoppingBasketLocal;
+import java.io.IOException;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+@WebServlet(name = "MainServlet", urlPatterns = {"/MainServlet"})
+public class MainServlet extends HttpServlet {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {   
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        //------------SESSION STUFF---------------
+        //Create session object for client if doesnt already exist
+        HttpSession session = request.getSession(true);
+        session.setMaxInactiveInterval(600); //////session timeout after 10 mins if not used!!!!
+        System.out.println(session.getCreationTime()+ " session creation time " );        
+        ShoppingBasketLocal cart =(ShoppingBasketLocal)session.getAttribute("CartKey");
+        //***************CREATING BASKET******
+        if(cart == null){
+            try {
+            InitialContext context = new InitialContext();
+            cart = (ShoppingBasketLocal)context.lookup("java:global/FYPWebApp/ShoppingBasketBean");
+            session.setAttribute("CartKey", cart);
+            System.out.println("----Session bean Shopping cart Created---- ");
+            } catch (NamingException e ){
+                throw new ServletException(e);
+            }        
+        } else {
+//            List<Product> tempBasket = cart.getBasketProducts();
+//            cart.addProduct(productFinder.getProduct("P002"));
+//            session.setAttribute("tempBasket", tempBasket);
+        }
+        //strings = parameter from form
+        String RedirectTxt = request.getParameter("Redirect_txt");    
+        //take us to the requested pages
+        if (RedirectTxt.equals("loginPage")){
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("LoginPage.jsp");
+            dispatcherrr.forward(request, response);           
+        }else if (RedirectTxt.equals("checkoutPage") ){           
+                     
+            response.sendRedirect("CheckoutPage.jsp");
+        }else if (RedirectTxt.equals("Items") ){                      
+            response.sendRedirect("ItemsPage.jsp");               
+            
+        }else if (RedirectTxt.equals("Logout")) {
+            session.invalidate();
+            response.sendRedirect("MainPage.jsp");
+        }else{
+            //or else keep me on the same page
+            response.sendRedirect("MainPage.jsp"); 
+        }
+    }
+}
+
+LoginServlet Class 
+
+package Control.Servlets;
+import Model.EJB.CustomerFinderLocal;
+import Model.EJB.CustomerLocal;
+import Model.EJB.ShoppingBasketLocal;
+import java.io.IOException;
+import javax.ejb.EJB;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+
+@WebServlet(name = "LoginServlet", urlPatterns = {"/LoginServlet"})
+public class LoginServlet extends HttpServlet {
+    @EJB 
+    private CustomerFinderLocal cfinder;
+    
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {    
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {   
+        //**************************-------------SESSION
+        HttpSession session = request.getSession();
+  //strings = parameter from form
+  String RedirectTxt = request.getParameter("loginsubmit");    
+  //take us to the requested pages
+  if (RedirectTxt.equals("Login")){
+        //***************************---------------------lOGIN------------------------***********
+        String uname = request.getParameter("uname");
+        String pword = request.getParameter("pword");
+        boolean pValidation = cfinder.validateCustomer(uname, pword);        
+        if (pValidation == true){          
+            
+            CustomerLocal clbbb = (CustomerLocal)session.getAttribute("Key");
+            if (clbbb==null) {
+                try{    
+                    Context icontext = new InitialContext();       
+                    //************************-------------STATEFUL BEAN-----------******
+                    CustomerLocal clocal = (CustomerLocal) icontext.lookup("java:global/FYPWebApp/CustomerBean");
+                    session.setAttribute("Key", clocal);
+                    // give signed on status
+                    clocal.validate();
+                    clocal.currentCustomer(uname);
+                    System.out.println(" Valid State is " + clocal.isValid() );
+                }catch(NamingException e){
+                    throw new ServletException(e);
+             }   
+             System.out.println("Loggin success!!!!!!!!");   
+        //***************************  Can put ADMIN LOGIN CODE HERE      
+             
+        ////**********----------Take to login success page
+        ShoppingBasketLocal cart =(ShoppingBasketLocal)session.getAttribute("CartKey");
+        //set customer
+        cart.setCustomer(cfinder.getCustomerWithUsername(uname));
+        session.setAttribute("currentCustomerKey", cart.getCustomer() );
+        RequestDispatcher dispatcherrr = request.getRequestDispatcher("LoginSuccess.jsp");
+        dispatcherrr.forward(request, response);        
+        }else if (pValidation == false ){
+            System.out.println("Loggin Unsuccessful!!!!!!");
+            ////**********----------Stay on same page            
+            response.sendRedirect("LoginFail.jsp");
+        }              
+        }
+  }else if (RedirectTxt.equals("New User")){
+      //***************************---------------------NEW USER CODE ------------------------***********
+      String uId = request.getParameter("newIdNo");
+      String firstName = request.getParameter("newFname");
+      String surName = request.getParameter("newSname");
+      String uName = request.getParameter("newUname");
+      String pWord = request.getParameter("newPword");
+      cfinder.newUser(uId, firstName, surName, uName, pWord);
+      System.out.println("**** New user created *****");
+      RequestDispatcher dispatcherrr = request.getRequestDispatcher("LoginPage.jsp");
+      dispatcherrr.forward(request, response); 
+      
+  }
+        
+  }
+
+}
+
+ItemServlet Class 
+
+package Control.Servlets;
+import Model.EJB.ProductFinderLocal;
+import java.io.IOException;
+import javax.ejb.EJB;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+@WebServlet(name = "ItemServlet", urlPatterns = {"/ItemServlet"})
+public class ItemServlet extends HttpServlet {
+    @EJB
+    private ProductFinderLocal pfinder;
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+  //strings = parameter from form
+  String RedirectTxt = request.getParameter("itemoption");    
+  //take us to the requested pages
+  if (RedirectTxt.equals("Show All Items")){   
+        request.setAttribute("allProducts", pfinder.getAllItems());        
+        //response.sendRedirect("ItemsPage.jsp");
+        RequestDispatcher dispatcherrr = request.getRequestDispatcher("ItemsPage.jsp");
+        dispatcherrr.forward(request, response);
+  } else if (RedirectTxt.equals("    Category     ")){        
+        String cat = request.getParameter("cat");  
+        String catID = "";
+        if (cat.equals("Footwear") ){
+            catID = "CAT001";      
+        }else if (cat.equals("Handbags")){
+            catID = "CAT002";  
+        }else if (cat.equals("Hoodies")){
+            catID = "CAT003";  
+        }else if (cat.equals("Jackets")){
+            catID = "CAT004";          
+        }                               
+        request.setAttribute("allProducts", pfinder.getItemCategory(catID));
+        RequestDispatcher dispatcherrr = request.getRequestDispatcher("ItemsPage.jsp");
+        dispatcherrr.forward(request, response);
+  }
+}
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        HttpSession session = request.getSession(); 
+    }
+}
+
+CheckoutServlet Class
+
+package Control.Servlets;
+import Model.EJB.CustomerLocal;
+import Model.EJB.ShoppingBasketLocal;
+import java.io.IOException;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+@WebServlet(name = "CheckoutServlet", urlPatterns = {"/CheckoutServlet"})
+public class CheckoutServlet extends HttpServlet {   
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {   
+        HttpSession session = request.getSession();
+        ShoppingBasketLocal cart =(ShoppingBasketLocal)session.getAttribute("CartKey");        
+        CustomerLocal clbbb = (CustomerLocal)session.getAttribute("Key");        
+        if ( clbbb== null ){
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("LoginPage.jsp");
+            dispatcherrr.forward(request, response);
+        } else {
+            System.out.println(clbbb.getCurrentCustomer()+"----------");
+            cart.checkout(request.getParameter("orderID"), clbbb.getCurrentCustomer());
+            session.invalidate();
+            System.out.println("Customer Has checked out");
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("MainPage.jsp");
+            dispatcherrr.forward(request, response);
+        }
+        
+    }
+}
+
+
+AdminServlet Class
+
+package Control.Servlets;
+import Model.EJB.CustomerFinderLocal;
+import Model.EJB.ProductFinderLocal;
+import Model.JPA.Customer;
+import java.io.IOException;
+import javax.ejb.EJB;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+@WebServlet(name = "AdminServlet", urlPatterns = {"/AdminServlet"})
+public class AdminServlet extends HttpServlet {
+    @EJB private ProductFinderLocal productFinder;
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {        
+        
+        
+        //????String choice =  request.getAttribute("choice");
+//        if ( choice == "Create"){                
+//           //productFinder.newProduct(id,  desc,  price, cat);        
+//        }        
+//        request.setAttribute("adminproduct", productFinder.getAllItems());           
+//        Customer cust = customerFinder.getCustomerWithID("CU00001");
+//        String fname = cust.getCFirstname();
+//        System.out.println( fname );                
+//        //request.setAttribute("adminCustomer",  )   );           
+//        RequestDispatcher dispatcherrr = request.getRequestDispatcher("AdminPage.jsp");
+//        dispatcherrr.forward(request, response); 
+    }
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        
+        String choice = request.getParameter("choice");
+        
+        if ( choice.equals("Retrieve")){            
+            request.setAttribute( "adminproduct", productFinder.getProduct(request.getParameter("itemID")) );
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("AdminPage.jsp");
+            dispatcherrr.forward(request, response);     
+        } else if (choice.equals("DELETE ITEM")) {
+            productFinder.deleteProduct( request.getParameter("itemID") );                    
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("AdminPage.jsp");
+            dispatcherrr.forward(request, response); 
+        } else if (choice.equals("Create")) {                        
+            productFinder.newProduct (request.getParameter("itemID"), request.getParameter("itemDesc"), Integer.parseInt(request.getParameter("itemPrice")), request.getParameter("itemCategoryID"));
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("AdminPage.jsp");
+            dispatcherrr.forward(request, response);        
+        } else {
+            RequestDispatcher dispatcherrr = request.getRequestDispatcher("AdminPage.jsp");
+            dispatcherrr.forward(request, response); 
+        }
+        
+    }
+}
