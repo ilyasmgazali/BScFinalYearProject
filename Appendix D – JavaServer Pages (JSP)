@@ -1,0 +1,405 @@
+Appendix D – JavaServer Pages (JSP)
+----- JSP Pages ------
+
+MainPage JSP 
+
+<%@taglib prefix="c"uri="http://java.sun.com/jsp/jstl/core" %>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Main Page</title>
+    </head>
+    <body>
+        <h1>Main Page</h1>
+<br><br>
+<h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>
+
+</body>
+</html>
+
+LoginSuccess JSP 
+
+<%@taglib prefix="c"uri="http://java.sun.com/jsp/jstl/core" %> 
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Login Success</title>
+    </head>
+    <body>
+        <h1>Login Success</h1>
+            Hi
+            
+            <br><br>
+             <table border="1" >            
+                <table>
+                    <tr>
+                    <td>Customer Id</td>
+                    <td> ${currentCustomerKey.customerId} </td>
+                    </tr>
+                </table>         
+                    <br>
+      
+<h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>                 
+    </body> 
+</html>
+
+LoginPage JSP 
+
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Login Page</title>
+    </head>
+    <body>
+        <h1>Login Page</h1>
+        <br>
+        <h4> USER LOGIN </h4>
+        <table border="1">
+            <form action="LoginServlet" method="POST">
+                <table>
+                    <tr>
+                    <td>Username</td>
+                    <td><input type="text" name="uname" value="" /></td>
+                    </tr>
+                    <tr>
+                    <td>Password</td>
+                    <td><input type="text" name="pword" value="" /></td>
+                    </tr>
+                    <tr>
+                    <td></td>
+                    <td><input type="submit" value="Login" name = "loginsubmit" /></td>
+                    </tr>
+                </table>
+            </form>
+                <br><br>
+         <h4> CREATE NEW USER </h4>
+             <form action="LoginServlet" method="POST">
+                <table>
+                    <tr>
+                    <td>ID </td>
+                    <td><input type="text" name="newIdNo" value="" /></td>
+                    </tr>                                      
+                    <tr>
+                    <td>First Name</td>
+                    <td><input type="text" name="newFname" value="" /></td>
+                    </tr>
+                    <tr>
+                    <td>Surname</td>
+                    <td><input type="text" name="newSname" value="" /></td>
+                    </tr>
+                    <tr>
+                    <td>Username</td>
+                    <td><input type="text" name="newUname" value="" /></td>
+                    </tr>
+                    <tr>
+                    <td>Password</td>
+                    <td><input type="text" name="newPword" value="" /></td>
+                    </tr>                                
+                    <tr>
+                    <td></td>
+                    <td><input type="submit" value="New User" name="loginsubmit" /></td>
+                    </tr>
+                </table>
+            </form>
+
+<h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>
+    </body>
+</html>
+
+LoginFail JSP 
+
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>JSP Page</title>
+    </head>
+    <body>
+        <h1>Login Fail</h1>
+    </body>
+   
+<h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>
+    
+</html>
+ItemPage JSP 
+
+<%@taglib prefix="c"uri="http://java.sun.com/jsp/jstl/core" %>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Items Page</title>
+    </head>
+    <body>
+        <h1>Items Page</h1>
+        <br>
+        <h4>ITEM SEARCH</h4>
+         <form action="ItemServlet" method="GET">
+                <table>
+                <tr>
+                    <td>
+                        Show Items
+                    </td>
+                    <td>
+                        <input type="submit" value="Show All Items" name="itemoption"/>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <select name="cat">
+                            <option value="Footwear" > Footwear </option>
+                            <option value="Handbags"> Handbags </option>
+                            <option value="Hoodies"> Hoodies </option>
+                            <option value="Jackets"> Jackets </option>
+                        </select>        
+                      
+                    </td>
+                    <td>
+                        <input type="submit" value="    Category     " name="itemoption"/>
+                    </td>
+                </tr>
+            </table>      
+        </form>        
+        <table border="1">
+            <th>Item ID</th><%--table headers--%>
+            <th>Item Description</th>
+            <th>Item Price</th>
+            <c:forEach items="${allProducts}" var="allProductsinpage">
+                <tr>
+                    <td>${allProductsinpage.productId}</td><%--table row/dimension--%>
+                    <td>${allProductsinpage.description}</td>
+                    <td>${allProductsinpage.price}</td> 
+                    <td>
+                    <form action="ShoppingCartServlet" method="POST" >
+                    <input type="hidden" name="addorremoveItem" value="additem"/>
+                    +
+                    <input type="submit" value= "${allProductsinpage.productId}" name = "itemSelected"/>
+                    </form>
+                    </td>
+                </tr>
+            </c:forEach>
+        </table>
+            <br><br><br>
+           <h4>BASKET</h4>
+           BASKET 
+           <table border="1">
+            <th>Item ID</th><%--table headers--%>
+            <th>Item Description</th>
+            <th>Item Price</th>
+            <c:forEach items="${tempBasket}" var="allProductsinBasket">
+                <tr>
+                    <td>${allProductsinBasket.productId}</td><%--table row/dimension--%>
+                    <td>${allProductsinBasket.description}</td>
+                    <td>${allProductsinBasket.price}</td>                    
+                </tr>
+            </c:forEach>
+        </table>
+            <br><br>
+<h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>
+    </body>    
+</html>
+
+CheckoutPage JSP 
+
+<%@taglib prefix="c"uri="http://java.sun.com/jsp/jstl/core" %>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Checkout PAge</title>
+    </head>
+    <body>
+        <h1>Checkout Page</h1>
+
+        
+        </table>
+            <br><br><br>
+           <h4>BASKET</h4>
+           Basket Items 
+           <table border="1">
+            <th>Item ID</th><%--table headers--%>
+            <th>Item Description</th>
+            <th>Item Price</th>
+            <c:forEach items="${tempBasket}" var="allProductsinBasket">
+                <tr>
+                    <td>${allProductsinBasket.productId}</td><%--table row/dimension--%>
+                    <td>${allProductsinBasket.description}</td>
+                    <td>${allProductsinBasket.price}</td> 
+                    <td>
+                    <form action="ShoppingCartServlet" method="POST">
+                    <input type="hidden" name="addorremoveItem" value="removeitem"/>    
+                    -
+                    <input type="submit" value= "${allProductsinBasket.productId}" name = "itemSelected"/>
+                    </form>
+                    </td>
+                </tr>
+            </c:forEach>
+        </table>
+            <br>
+            ${currentCustomerKey.customerId}
+            
+       <br>
+       <form action="CheckoutServlet" method="POST">
+            <input type ="text" name="orderID" value ="orderID">
+            <input type="submit" value="CHECKOUT BASKET" name ="basketchoice"/>    
+            
+       </form>
+       <br><br>
+        
+            
+                    
+<h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>
+            
+            
+    </body>
+</html>
+
+AdminPage JSP 
+
+<%@taglib prefix="c"uri="http://java.sun.com/jsp/jstl/core" %>
+<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Admin Page</title>
+    </head>
+    <body>
+   <h4>ITEMS</h4>
+        <form action="AdminServlet" method="POST">        
+            <table>
+                <tr>
+                    <td>Item ID
+                    </td>
+                    <td><input type="text" name="itemID" value="${Productobject.productId}" /></td>
+                </tr>
+                <tr>
+                    <td>Item Description
+                    </td>
+                    <td><input type="text" name="itemDesc" value="${Productobject.description}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Item Price
+                    </td>
+                    <td><input type="text" name="itemPrice" value="${Productobject.price}" />
+                    </td>
+                </tr>
+                <tr>
+                    <td>Category
+                    </td>
+                    <td><input type="text" name="itemCategoryID" value="" />
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="3">
+                        <input type="submit" name="choice" value="Create" />
+                        <input type="submit" name="choice" value="Retrieve" />
+                        <input type="submit" name="choice" value="Update" />                        
+                    </td>                
+                </tr>            
+            </table>       
+        </form> 
+    <br><br>
+    
+    <table border="1">
+            <th>Item ID</th>
+            <th>Item Description</th>
+            <th>Item Price</th>
+            
+                <tr>
+                    <td>${adminproduct.productId}</td>
+                    <td>${adminproduct.description}</td>
+                    <td>${adminproduct.price}</td>                    
+                    <td>
+                    <form action="AdminServlet" method="POST">  
+                    <input type="hidden" name="itemID" value="${adminproduct.productId}"/>
+                    <input type="submit" name="choice" value="DELETE ITEM" />
+                    </form> 
+                    </td>
+                </tr>
+
+        </table>  
+    <br>
+    
+    <h4> NAVIGATION </h4>
+    <form action="MainServlet" method="POST">
+       Select Page<br>
+        <select name="Redirect_txt">
+            <option value="loginPage"> Login Page </option>
+            <option value="Items"> Items Page </option>
+            <option value="checkoutPage"> Checkout Page </option>
+            <option value="Logout"> Logout and Main Page </option>
+        </select>
+        <input type="submit" value="OK" />      
+    </form>
+</html>
